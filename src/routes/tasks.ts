@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import { validateId } from "../middleware/validateId";
 
 interface Task {
   id: number;
@@ -17,27 +18,19 @@ router.get("/", (req: Request, res: Response) => {
 router.get("/completed", (req: Request, res: Response) => {
   const completedTasks = tasks.filter((t) => t.completed === true);
 
-  if (completedTasks.length > 0) {
-    return res.json(completedTasks);
-  } else {
-    return res.status(404).json({ message: "No Completed Task found." });
-  }
+  return res.status(200).json(completedTasks);
 });
 
-router.get("/:idx", (req: Request, res: Response) => {
-  const { idx } = req.params;
+router.use("/:id", validateId);
 
-  if (!idx) {
-    return res.status(400).json({ message: "Task ID is required." });
-  }
+router.get("/:id", (req: Request, res: Response) => {
+  const id: number = (req as any).taskId;
 
-  const taskFind = tasks.find((t) => t.id === parseInt(idx));
+  const taskFind = tasks.find((t) => t.id === id);
 
-  if (taskFind) {
-    return res.json(taskFind);
-  } else {
-    return res.status(404).json({ message: "Task not found." });
-  }
+  return taskFind
+    ? res.status(200).json(taskFind)
+    : res.status(404).json({ error: "Task not found." });
 });
 
 router.post("/", (req: Request, res: Response) => {
@@ -59,39 +52,57 @@ router.post("/", (req: Request, res: Response) => {
   res.status(201).json(newTask);
 });
 
-router.put("/:idx", (req: Request, res: Response) => {
-  const { idx } = req.params;
+router.put("/:id", (req: Request, res: Response) => {
+  const id: number = (req as any).taskId;
   const { title, completed } = req.body;
 
-  if (!idx) {
-    return res.status(400).json({ message: "Task ID is required." });
+  if (typeof completed !== "boolean") {
+    return res.status(400).json({ error: "Completed must be a boolean." });
+  } else if (!title || typeof title !== "string") {
+    return res
+      .status(400)
+      .json({ error: "Title is required and must be a string." });
   }
 
-  const taskFind = tasks.find((t) => t.id === parseInt(idx));
+  const taskFind = tasks.find((t) => t.id === id);
 
   if (taskFind) {
     taskFind.title = title;
     taskFind.completed = completed;
     res.status(200).json(taskFind);
   } else {
-    return res.status(404).json({ message: "Task not found." });
+    return res.status(404).json({ error: "Task not found." });
   }
 });
 
-router.delete("/:idx", (req: Request, res: Response) => {
-  const { idx } = req.params;
+router.delete("/:id", (req: Request, res: Response) => {
+  const id: number = (req as any).taskId;
 
-  if (!idx) {
-    return res.status(400).json({ message: "Task ID is required." });
-  }
-
-  const taskIndex = tasks.findIndex((t) => t.id === parseInt(idx));
+  const taskIndex = tasks.findIndex((t) => t.id === id);
 
   if (taskIndex !== -1) {
     tasks.splice(taskIndex, 1);
     return res.status(200).json({ message: "Task deleted successfully." });
   } else {
-    return res.status(404).json({ message: "Task not found." });
+    return res.status(404).json({ error: "Task not found." });
+  }
+});
+
+router.patch("/:id", (req: Request, res: Response) => {
+  const id: number = (req as any).taskId;
+  const { completed } = req.body;
+
+  if (typeof completed !== "boolean") {
+    return res.status(400).json({ error: "Completed must be a boolean." });
+  }
+
+  const taskFind = tasks.find((t) => t.id === id);
+
+  if (taskFind) {
+    taskFind.completed = completed;
+    res.status(200).json(taskFind);
+  } else {
+    return res.status(404).json({ error: "Task not found." });
   }
 });
 
