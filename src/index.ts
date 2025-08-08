@@ -1,16 +1,17 @@
-import express from "express";
+import express, { NextFunction } from "express";
+import authRoutes from "./routes/auth";
 import taskRoutes from "./routes/tasks";
+import { authenticate } from "./middleware/auth";
+import { errorHandler } from "./middleware/error";
 
 const app = express();
-const PORT = 3000;
-
 app.use(express.json());
-app.use("/tasks", taskRoutes);
+app.use("/auth", authRoutes);
+app.use("/tasks", authenticate, taskRoutes);
 
-app.get("/", (req, res) => {
-  res.send("Task Manager API is live!");
-});
+// 404 fallback
+app.use((req, res) => res.status(404).json({ error: "Not Found" }));
+// Error middleware
+app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Server running at Port ${PORT}`);
-});
+app.listen(3000, () => console.log("Server running"));
