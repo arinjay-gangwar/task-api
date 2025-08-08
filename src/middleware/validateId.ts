@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { BadRequestError } from "./error";
 
 export function validateId(
   req: Request<{ id: string }>,
@@ -8,13 +9,13 @@ export function validateId(
   const { id } = req.params;
 
   if (!id) {
-    return res.status(400).json({ error: "Task ID is required." });
+    return next(new BadRequestError("Task ID is required."));
   }
 
   const num = parseInt(id, 10);
 
   if (!Number.isInteger(num) || num < 1) {
-    return res.status(400).json({ error: "Invalid Task ID format." });
+    return next(new BadRequestError("Invalid Task ID format."));
   }
 
   (req as any).taskId = num;
