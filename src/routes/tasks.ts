@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { validateId } from "../middleware/validateId";
+import { BadRequestError } from "../middleware/error";
 
 interface Task {
   id: number;
@@ -37,9 +38,7 @@ router.post("/", (req: Request, res: Response) => {
   const { title } = req.body;
 
   if (!title || typeof title !== "string") {
-    return res
-      .status(400)
-      .json({ error: "Title is required and must be a string." });
+    throw new BadRequestError("Title is required and must be a string.");
   }
 
   const newTask: Task = {
@@ -57,11 +56,9 @@ router.put("/:id", (req: Request, res: Response) => {
   const { title, completed } = req.body;
 
   if (typeof completed !== "boolean") {
-    return res.status(400).json({ error: "Completed must be a boolean." });
+    throw new BadRequestError("Completed must be a boolean.");
   } else if (!title || typeof title !== "string") {
-    return res
-      .status(400)
-      .json({ error: "Title is required and must be a string." });
+    throw new BadRequestError("Title is required and must be a string.");
   }
 
   const taskFind = tasks.find((t) => t.id === id);
@@ -93,7 +90,7 @@ router.patch("/:id", (req: Request, res: Response) => {
   const { completed } = req.body;
 
   if (typeof completed !== "boolean") {
-    return res.status(400).json({ error: "Completed must be a boolean." });
+    throw new BadRequestError("Completed must be a boolean.");
   }
 
   const taskFind = tasks.find((t) => t.id === id);
